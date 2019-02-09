@@ -61,6 +61,7 @@ class Person {
 			$id = $conn->p2p_id;
 			array_push($roles, p2p_get_meta($id, 'role', true));
 		}
-		return $roles;
+		// Remove any blank entries.
+		return array_filter($roles);
 	}
 }

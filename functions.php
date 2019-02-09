@@ -74,16 +74,22 @@ function Sync_Members_to_MailChimp() {
     $log_message = '';
     $mailchimp_api = new MailChimpApiClient($abgmp_mailchimp_api_key);
 
-    $mailchimp_members = $mailchimp_api->get("lists/{$abgmp_mailchimp_list_id}/members");
+    $mailchimp_members = $mailchimp_api->get("lists/{$abgmp_mailchimp_list_id}/members?offset=0&count=200");
     $all_tags = Get_All_Tags_For_MailChimp();
 
-    $batch = $mailchimp_api->new_batch();
-    $batch_id = 0;
-
     foreach( Get_ChamberDBPeople() as $chamber_person ) {
+        if(strlen($chamber_person->email) == 0) {
+            continue;
+        }
         // For each person in Chamber
-        $mailchimp_person_index = array_search( $chamber_person->email, array_column( $mailchimp_members['members'], 'email_address' ) );
-        $in_mailchimp = !( $mailchimp_person_index === false );
+        $mailchimp_person_index = array_search( 
+                                    strtolower( $chamber_person->email ), 
+                                    array_map( 'strtolower', array_column( $mailchimp_members['members'], 'email_address' ) ) 
+                                );
+        $in_mailchimp = in_array( 
+                                    strtolower( $chamber_person->email ), 
+                                    array_map( 'strtolower', array_column( $mailchimp_members['members'], 'email_address' ) ) 
+                                );
 
         if( $in_mailchimp ) {
             $mailchimp_person = $mailchimp_members['members'][$mailchimp_person_index];
@@ -114,8 +120,10 @@ function Sync_Members_to_MailChimp() {
             if( count($tags_to_edit) > 0 ) {
                 // Send edit request
                 $hash = $mailchimp_api->subscriberHash($mailchimp_person['email_address']);
-                $result = $mailchimp_api->post( "/lists/{$abgmp_mailchimp_list_id}/members/{$hash}/tags", array(
-                    'tags' => $tags_to_edit ));
+                $request_body = [
+                    'tags' => $tags_to_edit
+                ];
+                $result = $mailchimp_api->post( "/lists/{$abgmp_mailchimp_list_id}/members/{$hash}/tags", $request_body, 60);
             }
         }
         else {
@@ -123,20 +131,22 @@ function Sync_Members_to_MailChimp() {
             $tags_to_add = Get_Tags_For_MailChimp( $chamber_person );
             $tags_to_add_s = implode(', ',$tags_to_add);
             $log_message .= "Adding {$chamber_person->name} to list with the following tags: {$tags_to_add_s} <br />";
+
             $request_body = [
-                'email_address' => $chamber_person->email,
-                'email_type' => 'html',
-                'status' => 'subscribed',
-                'tags' => $tags_to_add
-            ];
-            $result = $mailchimp_api->post("lists/{$abgmp_mailchimp_list_id}/members", $request_body );
+	                'email_address' => $chamber_person->email,
+	                'email_type' => 'html',
+	                'status' => 'subscribed'
+	            ];
+            if(count($tags_to_add) > 0) {
+	            $request_body['tags'] = $tags_to_add;
+       		}
+       		else {
+       			
+       		}
+            $result = $mailchimp_api->post( "lists/{$abgmp_mailchimp_list_id}/members", $request_body, 60 );
         }
     }
-
-    //$result = $batch->execute();
-    //var_dump($result);
-
-    echo $log_message;
+    return $log_message;
 }
 
 function guildmp_mailchimp_sync() {
