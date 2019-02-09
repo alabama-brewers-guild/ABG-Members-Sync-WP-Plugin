@@ -69,12 +69,12 @@ function Get_Tags_For_MailChimp( $person ) {
 }
 
 function Sync_Members_to_MailChimp() {
-    global $mailchimp_list_id;
-    global $mailchimp_api_key;
+    global $abgmp_mailchimp_list_id;
+    global $abgmp_mailchimp_api_key;
     $log_message = '';
-    $mailchimp_api = new MailChimpApiClient($mailchimp_api_key);
+    $mailchimp_api = new MailChimpApiClient($abgmp_mailchimp_api_key);
 
-    $mailchimp_members = $mailchimp_api->get("lists/{$mailchimp_list_id}/members");
+    $mailchimp_members = $mailchimp_api->get("lists/{$abgmp_mailchimp_list_id}/members");
     $all_tags = Get_All_Tags_For_MailChimp();
 
     $batch = $mailchimp_api->new_batch();
@@ -114,7 +114,7 @@ function Sync_Members_to_MailChimp() {
             if( count($tags_to_edit) > 0 ) {
                 // Send edit request
                 $hash = $mailchimp_api->subscriberHash($mailchimp_person['email_address']);
-                $result = $mailchimp_api->post( "/lists/{$mailchimp_list_id}/members/{$hash}/tags", array(
+                $result = $mailchimp_api->post( "/lists/{$abgmp_mailchimp_list_id}/members/{$hash}/tags", array(
                     'tags' => $tags_to_edit ));
             }
         }
@@ -129,7 +129,7 @@ function Sync_Members_to_MailChimp() {
                 'status' => 'subscribed',
                 'tags' => $tags_to_add
             ];
-            $result = $mailchimp_api->post("lists/{$mailchimp_list_id}/members", $request_body );
+            $result = $mailchimp_api->post("lists/{$abgmp_mailchimp_list_id}/members", $request_body );
         }
     }
 
