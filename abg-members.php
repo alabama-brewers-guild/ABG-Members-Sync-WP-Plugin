@@ -34,7 +34,7 @@ add_action('abgp_daily_job', 'abgp_daily_action');
 // Daily Action
 function abgp_daily_action() {
     global $abgmp_notification_email_to, $abgmp_mailchimp_api_key, $abgmp_mailchimp_list_id;
-    $log_head = '<p>Plugin log for daily action run at ' . date('m/d/Y g:i A', time()) . '</p>';
+    $log_head = '<p>Plugin log for daily action run at ' . date('m/d/Y g:i A', time()) . '</p>  ';
     $log = '';
     
     try {
