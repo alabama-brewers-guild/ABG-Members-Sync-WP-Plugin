@@ -89,10 +89,11 @@ function Sync_Members_to_MailChimp() {
     $all_tags = Get_All_Tags_For_MailChimp();
 
     foreach( Get_ChamberDBPeople() as $chamber_person ) {
+    	// For each person in Chamber
         if(strlen($chamber_person->email) == 0) {
             continue;
         }
-        // For each person in Chamber
+        
         $in_mailchimp = in_array( 
             strtolower( $chamber_person->email ), 
             array_map( 'strtolower', array_column( $mailchimp_members, 'email_address' ) ) 
@@ -157,7 +158,6 @@ function Sync_Members_to_MailChimp() {
        		}
             $result = $mailchimp_api->post( "lists/{$abgmp_mailchimp_list_id}/members", $request_body, 60 );
         }
-        var_dump(memory_get_usage());
     }
 
     return $log_message;
