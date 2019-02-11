@@ -74,7 +74,18 @@ function Sync_Members_to_MailChimp() {
     $log_message = '';
     $mailchimp_api = new MailChimpApiClient($abgmp_mailchimp_api_key);
 
-    $mailchimp_members = $mailchimp_api->get("lists/{$abgmp_mailchimp_list_id}/members?offset=0&count=200");
+    $offset=0;
+    $count = 100;
+    $mailchimp_members = array();
+
+    do {
+    	$result = $mailchimp_api->get("lists/{$abgmp_mailchimp_list_id}/members?offset={$offset}&count={$count}&fields=members,total_items");
+    	$mailchimp_members = array_merge( $mailchimp_members, $result['members'] );
+    	$offset = $offset+$count;
+    	$total_count = $result['total_items'];
+    }
+    while( $offset < $total_count );
+    
     $all_tags = Get_All_Tags_For_MailChimp();
 
     foreach( Get_ChamberDBPeople() as $chamber_person ) {
@@ -82,18 +93,19 @@ function Sync_Members_to_MailChimp() {
             continue;
         }
         // For each person in Chamber
-        $mailchimp_person_index = array_search( 
-                                    strtolower( $chamber_person->email ), 
-                                    array_map( 'strtolower', array_column( $mailchimp_members['members'], 'email_address' ) ) 
-                                );
         $in_mailchimp = in_array( 
-                                    strtolower( $chamber_person->email ), 
-                                    array_map( 'strtolower', array_column( $mailchimp_members['members'], 'email_address' ) ) 
-                                );
+            strtolower( $chamber_person->email ), 
+            array_map( 'strtolower', array_column( $mailchimp_members, 'email_address' ) ) 
+        );
 
         if( $in_mailchimp ) {
-            $mailchimp_person = $mailchimp_members['members'][$mailchimp_person_index];
-            // They are already in MailChimp. Let's check their tags
+        	// They are already in MailChimp. Let's check their tags
+	        $mailchimp_person_index = array_search( 
+                strtolower( $chamber_person->email ), 
+                array_map( 'strtolower', array_column( $mailchimp_members, 'email_address' ) ) 
+            );
+
+            $mailchimp_person = $mailchimp_members[$mailchimp_person_index];
             $chamber_tags = Get_Tags_For_MailChimp( $chamber_person );
             $mailchimp_tags = array_column( $mailchimp_person['tags'], 'name');
 
@@ -145,7 +157,9 @@ function Sync_Members_to_MailChimp() {
        		}
             $result = $mailchimp_api->post( "lists/{$abgmp_mailchimp_list_id}/members", $request_body, 60 );
         }
+        var_dump(memory_get_usage());
     }
+
     return $log_message;
 }
 
