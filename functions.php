@@ -166,3 +166,73 @@ function Sync_Members_to_MailChimp() {
 function guildmp_mailchimp_sync() {
 
 }
+
+function Sync_All_Users_To_Roles_And_People() {
+    $log_message = '';
+    foreach(get_users() as $user) {
+        Sync_User_To_Role( $user->user_login, $user->user_email );
+        Connect_User_To_Person( $user->user_login, $user->user_email );
+    }
+    return $log_message;
+}
+
+function Sync_User_To_Role( $user_login, $user_email ) {
+    $user = new WP_User( null, $user_login );
+    $chamber_person = GetChamberDBPersonByEmail( $user_email );
+    if( $chamber_person == null ) {
+        return;
+    }
+
+    foreach( $chamber_person->Get_Connected_Businesses() as $business ) {
+        $levels = $business->Get_Membership_Levels();
+        $roles_to_remove = array();
+        if( in_array( 'Regular Member', $levels ) && $business->membership_status == 'Current' ) {
+            $user->add_role('brewing_member');
+        }
+        else if( in_array( 'Associate Member', $levels ) && $business->membership_status == 'Current' ) {
+            $user->add_role('brewing_member');
+        }
+        else {
+            array_push( $roles_to_remove, 'brewing_member');
+        }
+        if( in_array( 'Distillery Member', $levels ) && $business->membership_status == 'Current' ) {
+            $user->add_role('distillery_member');
+        }
+        else {
+            array_push( $roles_to_remove, 'distillery_member');
+        }
+        if( in_array( 'Allied Member', $levels ) && $business->membership_status == 'Current' ) {
+            $user->add_role('allied_member');
+        }
+        else {
+            array_push( $roles_to_remove, 'allied_member');
+        }
+        foreach($roles_to_remove as $role) {
+            $user->remove_role($role);
+        }
+    }
+}
+
+function Connect_User_To_Person( $user_login, $user_email ) {
+    $user = new WP_User( null, $user_login );
+    $chamber_person = GetChamberDBPersonByEmail( $user_email );
+    if( $chamber_person != null ) {
+        p2p_type( 'people_to_user' )->connect(
+            $user->ID,
+            $chamber_person->ID,
+            array( 'date' => current_time('mysql') )
+        );
+    }
+}
+
+function GetChamberDBPersonByEmail( $user_email ) {
+    $people = Get_ChamberDBPeople();
+
+    foreach( $people as $key => $val ) {
+        if( trim(strtolower($val->email)) == trim(strtolower($user_email) )) {
+            return $val;
+        }
+    }
+    return null;
+}
+

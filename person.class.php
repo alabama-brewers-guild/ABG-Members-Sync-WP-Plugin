@@ -8,6 +8,7 @@ class Person {
 	private $post_person;
 	private $post_person_meta;
 
+	public $ID;
 	public $name;
 	public $email;
 
@@ -16,6 +17,7 @@ class Person {
 		$this->post_person = get_post($post_id);
 		$this->post_person_meta = get_post_meta($post_id);
 
+		$this->ID = $this->post_person->ID;
 		$this->name = $this->post_person->post_title;
 		$this->email = unserialize($this->post_person_meta['_cdcrm_email'][0])[0]["emailaddress"];
 	}

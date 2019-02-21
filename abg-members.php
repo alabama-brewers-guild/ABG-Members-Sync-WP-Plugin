@@ -18,30 +18,44 @@ define('ABGP_VERSION',	'1.0.0');
 /// For Testing
 add_shortcode( 'abgpdebug', 'abgp_debug_func' );
 function abgp_debug_func( ) {
-	global $abgmp_mailchimp_list_id, $abgmp_mailchimp_api_key;
-	abgp_daily_action();
+	Sync_All_Users_To_Roles_And_People('danroberts728','danroberts728@gmail.com');
 }
 
+// Activation
 register_activation_hook(__FILE__, 'abgp_activation');
-
 function abgp_activation() {
     if (! wp_next_scheduled ( 'abgp_daily_job' )) {
         wp_schedule_event(time(), 'daily', 'abgp_daily_job');
     }
 }
-add_action('abgp_daily_job', 'abgp_daily_action');
+// Deactivation
+register_deactivation_hook(__FILE__, 'abgp_deactivation');
+function abgp_deactivation() {
+    wp_clear_scheduled_hook('abgp_daily_job');
+}
 
+// Daily Cron Job
+add_action('abgp_daily_job', 'abgp_daily_action');
 // Daily Action
 function abgp_daily_action() {
     global $abgmp_notification_email_to, $abgmp_mailchimp_api_key, $abgmp_mailchimp_list_id;
     $log_head = '<p>Plugin log for daily action run at ' . date('m/d/Y g:i A', time()) . '</p>  ';
     $log = '';
     
+    // Sync MailChimp First
     try {
         $log .= Sync_Members_to_MailChimp();
     }
     catch(Exception $e) {
         $log .= "<p>Caught Exception: {$e->getMessage()}</p>";
+    }
+
+    // Sync Roles and Connected People
+    try {
+    	$log .= Sync_All_Users_To_Roles_And_People();
+    }
+    catch(Exception $e) {
+    	$log .= "<p>Caught Exception: {$e->getMessage()}</p>";
     }
 
     if( strlen($log) == 0 ) {
@@ -54,8 +68,11 @@ function abgp_daily_action() {
     wp_mail($abgmp_notification_email_to, $subject, stripslashes($body), $headers );
 }
 
-register_deactivation_hook(__FILE__, 'abgp_deactivation');
-
-function abgp_deactivation() {
-    wp_clear_scheduled_hook('abgp_daily_job');
+function abgp_registration_action( $sanitized_user_login, $user_email, $errors ) {
+	Sync_User_To_Role( $sanitized_user_login, $user_email );
+	Connect_User_To_Person( $sanitized_user_login, $user_email );
 }
+
+
+// New User Registration Hook
+add_action( 'register_post', 'abgp_registration_action', 10, 1);
