@@ -19,7 +19,13 @@ class Person {
 
 		$this->ID = $this->post_person->ID;
 		$this->name = $this->post_person->post_title;
-		$this->email = unserialize($this->post_person_meta['_cdcrm_email'][0])[0]["emailaddress"];
+		if( array_key_exists( '_cdcrm_email', $this->post_person_meta ) ) {
+			$this->email = unserialize($this->post_person_meta['_cdcrm_email'][0])[0]["emailaddress"];
+		}
+		else {
+			$this->email = '';
+		}
+		
 	}
 
 	public function Get_People_Categories() {

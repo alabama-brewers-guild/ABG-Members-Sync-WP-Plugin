@@ -18,7 +18,8 @@ define('ABGP_VERSION',	'1.0.0');
 /// For Testing
 add_shortcode( 'abgpdebug', 'abgp_debug_func' );
 function abgp_debug_func( ) {
-	Sync_All_Users_To_Roles_And_People('danroberts728','danroberts728@gmail.com');
+	$user = new WP_User( 58 );
+	Sync_User_To_Role( $user->user_login, $user->user_email );
 }
 
 // Activation
@@ -68,11 +69,18 @@ function abgp_daily_action() {
     wp_mail($abgmp_notification_email_to, $subject, stripslashes($body), $headers );
 }
 
-function abgp_registration_action( $sanitized_user_login, $user_email, $errors ) {
-	Sync_User_To_Role( $sanitized_user_login, $user_email );
-	Connect_User_To_Person( $sanitized_user_login, $user_email );
+// New User Registration Hook
+add_action( 'user_register', 'abgp_registration_action', 10, 1);
+// Sync User to Role and Connect user to person
+function abgp_registration_action( $user_id ) {
+	$user = get_userdata( $user_id );
+	Connect_User_To_Person( $user->user_login, $user->user_email );
 }
 
-
-// New User Registration Hook
-add_action( 'register_post', 'abgp_registration_action', 10, 1);
+// Login Hook
+add_action('wp_login', 'abgp_login_action', 10, 2);
+// Sync user role on each login
+function abgp_login_action( $user_login, $userobj ) {
+	$user = new WP_User( null, $user_login );
+	Sync_User_To_Role( $user->user_login, $user->user_email );
+}

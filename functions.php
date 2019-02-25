@@ -179,6 +179,7 @@ function Sync_All_Users_To_Roles_And_People() {
 function Sync_User_To_Role( $user_login, $user_email ) {
     $user = new WP_User( null, $user_login );
     $chamber_person = GetChamberDBPersonByEmail( $user_email );
+
     if( $chamber_person == null ) {
         return;
     }
@@ -220,7 +221,7 @@ function Connect_User_To_Person( $user_login, $user_email ) {
         p2p_type( 'people_to_user' )->connect(
             $user->ID,
             $chamber_person->ID,
-            array( 'date' => current_time('mysql') )
+            array( 'date' => current_time('mysql') ) 
         );
     }
 }
