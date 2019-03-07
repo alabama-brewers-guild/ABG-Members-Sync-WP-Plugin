@@ -170,13 +170,14 @@ function guildmp_mailchimp_sync() {
 function Sync_All_Users_To_Roles_And_People() {
     $log_message = '';
     foreach(get_users() as $user) {
-        Sync_User_To_Role( $user->user_login, $user->user_email );
-        Connect_User_To_Person( $user->user_login, $user->user_email );
+        $log_message .= Sync_User_To_Role( $user->user_login, $user->user_email );
+        $log_message .= Connect_User_To_Person( $user->user_login, $user->user_email );
     }
     return $log_message;
 }
 
 function Sync_User_To_Role( $user_login, $user_email ) {
+    $log_message = '';
     $user = new WP_User( null, $user_login );
     $chamber_person = GetChamberDBPersonByEmail( $user_email );
 
@@ -184,34 +185,62 @@ function Sync_User_To_Role( $user_login, $user_email ) {
         return;
     }
 
+    $roles_needed = array();
+    $roles_to_add = array();
+    $roles_to_remove = array();
+
+    // Get the roles needed for this $user
     foreach( $chamber_person->Get_Connected_Businesses() as $business ) {
         $levels = $business->Get_Membership_Levels();
-        $roles_to_remove = array();
-        if( in_array( 'Regular Member', $levels ) && $business->membership_status == 'Current' ) {
-            $user->add_role('brewing_member');
-        }
-        else if( in_array( 'Associate Member', $levels ) && $business->membership_status == 'Current' ) {
-            $user->add_role('brewing_member');
-        }
-        else {
-            array_push( $roles_to_remove, 'brewing_member');
+
+        // Figure out what roles the user should have
+        if( ( in_array('Associate Member', $levels) || in_array('Regular Member', $levels) ) && $business->membership_status == 'Current' ) {
+            // If Current Regular or Associate Member,  pereson should have brewing_member role
+            array_push($roles_needed, 'brewing_member');
         }
         if( in_array( 'Distillery Member', $levels ) && $business->membership_status == 'Current' ) {
-            $user->add_role('distillery_member');
-        }
-        else {
-            array_push( $roles_to_remove, 'distillery_member');
+            // If Current Distillery Member,  pereson should have brewing_member role
+            array_push($roles_needed, 'distillery_member');
         }
         if( in_array( 'Allied Member', $levels ) && $business->membership_status == 'Current' ) {
-            $user->add_role('allied_member');
-        }
-        else {
-            array_push( $roles_to_remove, 'allied_member');
-        }
-        foreach($roles_to_remove as $role) {
-            $user->remove_role($role);
+            // If Current Allied Member,  pereson should have brewing_member role
+            array_push($roles_needed, 'allied_member');
         }
     }
+
+    // Remove duplicates
+    array_unique($roles_needed);
+
+    // Figure out which roles to add/remove
+    foreach( array('brewing_member', 'distillery_member', 'allied_member') as $role ) {
+        // Decide whether to add, remove, or do nothing with the role
+        if( $user->has_cap($role) && !in_array($role, $roles_needed) ) {
+            // Non-Brewing Member has role.  We need to remove the role
+            array_push($roles_to_remove, $role);
+        }
+        else if( !$user->has_cap($role) && in_array($role, $roles_needed) ) {
+            // Brewing Member does not have role. We need to add the role
+            array_push($roles_to_add, $role);
+        }
+        // Else do nothing.
+    }
+
+    // Remove duplicates
+    array_unique($roles_to_add);
+    array_unique($roles_to_remove);
+
+    // Add roles
+    foreach( $roles_to_add as $role ) {
+        $user->add_role($role);
+    }
+    $log_message .= "{$user_login} had the following roles added: " . implode(',', $roles_to_add);
+    // Remove roles
+    foreach( $roles_to_remove as $role) {
+        $user->remove_role($role);
+    }
+    $log_message .= "{$user_login} had the following roles removed: " . implode(',', $roles_to_remove);
+
+    return $log_message;
 }
 
 function Connect_User_To_Person( $user_login, $user_email ) {

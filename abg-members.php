@@ -18,8 +18,9 @@ define('ABGP_VERSION',	'1.0.0');
 /// For Testing
 add_shortcode( 'abgpdebug', 'abgp_debug_func' );
 function abgp_debug_func( ) {
-	$user = new WP_User( 58 );
+	$user = new WP_User( 12 );
 	Sync_User_To_Role( $user->user_login, $user->user_email );
+	Connect_User_To_Person($user->user_login, $user->user_email);
 }
 
 // Activation
