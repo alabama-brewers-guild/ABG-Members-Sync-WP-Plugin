@@ -259,15 +259,20 @@ function Sync_User_To_Role( $user_login, $user_email ) {
     array_unique($roles_to_remove);
 
     // Add roles
-    foreach( $roles_to_add as $role ) {
-        $user->add_role($role);
+    if( !empty($roles_to_add) ) {
+        $log_message .= "{$user_login} had the following roles added: " . implode(',', $roles_to_add) . "<br />";
+        // Add roles
+        foreach( $roles_to_add as $role ) {
+            $user->add_role($role);
+        }
     }
-    $log_message .= "{$user_login} had the following roles added: " . implode(',', $roles_to_add);
-    // Remove roles
-    foreach( $roles_to_remove as $role) {
-        $user->remove_role($role);
+    if( !empty($roles_to_remove) ) {
+        $log_message .= "{$user_login} had the following roles removed: " . implode(',', $roles_to_remove) . "<br />";
+        // Remove roles
+        foreach( $roles_to_add as $role ) {
+            $user->remove_role($role);
+        }
     }
-    $log_message .= "{$user_login} had the following roles removed: " . implode(',', $roles_to_remove);
 
     return $log_message;
 }

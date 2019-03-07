@@ -21,7 +21,7 @@ function abgp_debug_func( ) {
 	$user = new WP_User( 12 );
 	//Sync_User_To_Role( $user->user_login, $user->user_email );
 	//echo Connect_User_To_Person($user->user_login, $user->user_email);
-	echo Sync_Members_to_MailChimp();
+	//echo Sync_Members_to_MailChimp();
 }
 
 // Activation
