@@ -77,6 +77,7 @@ function Sync_Members_to_MailChimp() {
     $offset=0;
     $count = 100;
     $mailchimp_members = array();
+    $chamber_people = Get_ChamberDBPeople();
 
     do {
     	$result = $mailchimp_api->get("lists/{$abgmp_mailchimp_list_id}/members?offset={$offset}&count={$count}&fields=members,total_items");
@@ -88,7 +89,8 @@ function Sync_Members_to_MailChimp() {
     
     $all_tags = Get_All_Tags_For_MailChimp();
 
-    foreach( Get_ChamberDBPeople() as $chamber_person ) {
+    // Add new member and update tags for everyone in database
+    foreach( $chamber_people as $chamber_person ) {
     	// For each person in Chamber
         if(strlen($chamber_person->email) == 0) {
             continue;
@@ -160,11 +162,38 @@ function Sync_Members_to_MailChimp() {
         }
     }
 
+    // Now let's remove tags for people who are not in our database
+    foreach($mailchimp_members as $mc_member) {
+        
+        $in_chamber = in_array( 
+            strtolower( $mc_member['email_address'] ), 
+            array_map( 'strtolower', array_map( function($e) {
+                return $e->email;
+            }, $chamber_people)  
+        ));
+        if(!$in_chamber) {
+            $tags_to_remove = array();
+            foreach( $mc_member['tags'] as $tag ) {
+                if( in_array( $tag['name'], $all_tags ) ) {
+                    $log_message .= "{$mc_member['email_address']} is not in Chamber Database and had tag removed: {$tag['name']}<br />";
+                    array_push($tags_to_remove, array(
+                        'name' => $tag['name'],
+                        'status' => 'inactive'));
+                }
+            }
+            if( count($tags_to_remove) > 0 ) {
+                // Send edit request
+                $hash = $mailchimp_api->subscriberHash($mc_member['email_address']);
+                $request_body = [
+                    'tags' => $tags_to_remove
+                ];
+                $result = $mailchimp_api->post( "/lists/{$abgmp_mailchimp_list_id}/members/{$hash}/tags", $request_body, 60);
+            }
+
+        }
+    }
+
     return $log_message;
-}
-
-function guildmp_mailchimp_sync() {
-
 }
 
 function Sync_All_Users_To_Roles_And_People() {
@@ -253,6 +282,10 @@ function Connect_User_To_Person( $user_login, $user_email ) {
             array( 'date' => current_time('mysql') ) 
         );
     }
+}
+
+function Untag_Non_Members_From_MailChimp() {
+
 }
 
 function GetChamberDBPersonByEmail( $user_email ) {
