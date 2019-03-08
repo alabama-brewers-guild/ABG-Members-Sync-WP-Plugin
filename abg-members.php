@@ -61,6 +61,14 @@ function abgp_daily_action() {
     	$log .= "<p>Caught Exception: {$e->getMessage()}</p>";
     }
 
+    // Sync online Membership Directory
+    try {
+        $log .= BuildMembershipDirectory();
+    }
+    catch(Exception $e) {
+        $log .= "<p>Caught Exception: {$e->getMessage()}</p>";
+    }
+
     if( strlen($log) == 0 ) {
         $log .= "<p>No activity. Nothing changed.</p>";
     }

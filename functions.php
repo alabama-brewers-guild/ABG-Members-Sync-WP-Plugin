@@ -304,25 +304,55 @@ function GetChamberDBPersonByEmail( $user_email ) {
     return null;
 }
 
+function cmp_directory($a, $b) {
+    $last_word_a = array_pop( explode(' ', $a->name) );
+    $last_word_b = array_pop( explode(' ', $b->name) );
+    return strcasecmp($last_word_a, $last_word_b);
+}
+
 function BuildMembershipDirectory() {
     global $wpdb;
     global $directory_tablepress_table_id;
     $people = Get_ChamberDBPeople();
+    usort($people, "cmp_directory");
+
     
     $postContent = Array();
     $postContent[0] = Array("Name","Organization","Type","Email","Title");
 
-    for($i=0; $i<count($people); $i++) {
-        $person = $people[$i];
-        $biz = $person->Get_Connected_Businesses()[0];
+    $i = 0;
+    foreach($people as $person) {
+        $bizs = $person->Get_Connected_Businesses();
+        if( !empty($bizs) ) {
+            $biz = $person->Get_Connected_Businesses()[0];
+            if($biz->membership_status == "Current") {
+                $type_full = $biz->Get_Membership_Levels()[0];
+                $type = '';
+                if($biz->name == "Alabama Brewers Guild") {
+                    $type = "Guild Staff";
+                }
+                else if($type_full == "Allied Member") {
+                    $type = "Allied";
+                }
+                else if($type_full == "Associate Member" || $type_full == "Regular Member") {
+                    $type = "Brewing";
+                }
+                else if($type_full == "Distillery Member") {
+                    $type = "Distillery";
+                }
 
-        $name = $person->name;
-        $organization = $biz->name;
-        $type = $biz->Get_Membership_Levels()[0];
-        $email = "<a href=\"mailto:{$person->email}\">$person->email</a>";
-        $title = $person->title;
 
-        $postContent[$i+1] = Array($name, $organization, $type, $email, $title);
+
+                $i = $i+1;
+                $name = $person->name;
+                $organization = $biz->name;
+                $type_full = $biz->Get_Membership_Levels()[0];
+                $email = "<a href=\"mailto:{$person->email}\">$person->email</a>";
+                $title = $person->title;
+
+                $postContent[$i] = Array($name, $organization, $type, $email, $title);
+            }
+        }
     }
 
     $post_content_encoded = json_encode($postContent);
