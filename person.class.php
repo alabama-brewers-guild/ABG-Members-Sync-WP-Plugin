@@ -11,6 +11,7 @@ class Person {
 	public $ID;
 	public $name;
 	public $email;
+	public $title;
 
 	public function __construct( $post_id ) {
 
@@ -19,6 +20,12 @@ class Person {
 
 		$this->ID = $this->post_person->ID;
 		$this->name = $this->post_person->post_title;
+		if( array_key_exists( '_cdcrm_title', $this->post_person_meta ) ) {
+			$this->title = $this->post_person_meta['_cdcrm_title'][0];
+		}
+		else {
+			$this->title = '';
+		}
 		if( array_key_exists( '_cdcrm_email', $this->post_person_meta ) ) {
 			$this->email = unserialize($this->post_person_meta['_cdcrm_email'][0])[0]["emailaddress"];
 		}

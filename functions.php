@@ -304,3 +304,40 @@ function GetChamberDBPersonByEmail( $user_email ) {
     return null;
 }
 
+function BuildMembershipDirectory() {
+    global $wpdb;
+    global $directory_tablepress_table_id;
+    $people = Get_ChamberDBPeople();
+    
+    $postContent = Array();
+    $postContent[0] = Array("Name","Organization","Type","Email","Title");
+
+    for($i=0; $i<count($people); $i++) {
+        $person = $people[$i];
+        $biz = $person->Get_Connected_Businesses()[0];
+
+        $name = $person->name;
+        $organization = $biz->name;
+        $type = $biz->Get_Membership_Levels()[0];
+        $email = "<a href=\"mailto:{$person->email}\">$person->email</a>";
+        $title = $person->title;
+
+        $postContent[$i+1] = Array($name, $organization, $type, $email, $title);
+    }
+
+    $post_content_encoded = json_encode($postContent);
+    $affected = $wpdb->update(
+        $wpdb->posts,
+        array( 'post_content' => $post_content_encoded ),
+        array( 'ID' => $directory_tablepress_table_id ),
+        array( '%s' ),
+        array( '%d' ));
+    echo $affected;
+    if($affected == 0) {
+        return "WARNING: Directory table not updated.";
+    }
+    else {
+        return '';
+    }
+}
+
