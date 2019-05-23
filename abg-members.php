@@ -72,7 +72,15 @@ function abgp_daily_action() {
     if( strlen($log) == 0 ) {
         $log .= "<p>No activity. Nothing changed.</p>";
     }
-    
+
+    // Sync to Google Groups
+    try {
+        $log .= Sync_Members_to_Google_Groups();
+    }
+    catch(Exception $e) {
+        $log .= "<p>Caught Exception: {$e->getMessage()}</p>";
+    }
+
     add_filter( 'wp_mail_content_type', 'wpdocs_set_html_mail_content_type' );
 
     $body = $log_head . $log;

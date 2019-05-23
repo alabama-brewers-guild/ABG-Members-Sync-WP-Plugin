@@ -342,7 +342,6 @@ function BuildMembershipDirectory() {
                 }
 
 
-
                 $i = $i+1;
                 $name = $person->name;
                 $organization = $biz->name;
@@ -371,3 +370,8 @@ function BuildMembershipDirectory() {
     }
 }
 
+function Sync_Members_to_Google_Groups() {
+    global $wpdb;
+
+    
+}
