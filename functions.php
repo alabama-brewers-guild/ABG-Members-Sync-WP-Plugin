@@ -244,11 +244,11 @@ function Sync_User_To_Role( $user_login, $user_email ) {
     foreach( array('brewing_member', 'distillery_member', 'allied_member') as $role ) {
         // Decide whether to add, remove, or do nothing with the role
         if( $user->has_cap($role) && !in_array($role, $roles_needed) ) {
-            // Non-Brewing Member has role.  We need to remove the role
+            // Non-Member has role.  We need to remove the role
             array_push($roles_to_remove, $role);
         }
         else if( !$user->has_cap($role) && in_array($role, $roles_needed) ) {
-            // Brewing Member does not have role. We need to add the role
+            // Member does not have role. We need to add the role
             array_push($roles_to_add, $role);
         }
         // Else do nothing.
@@ -269,7 +269,7 @@ function Sync_User_To_Role( $user_login, $user_email ) {
     if( !empty($roles_to_remove) ) {
         $log_message .= "{$user_login} had the following roles removed: " . implode(',', $roles_to_remove) . "<br />";
         // Remove roles
-        foreach( $roles_to_add as $role ) {
+        foreach( $roles_to_remove as $role ) {
             $user->remove_role($role);
         }
     }

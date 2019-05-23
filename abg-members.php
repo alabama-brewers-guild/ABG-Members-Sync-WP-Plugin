@@ -72,11 +72,16 @@ function abgp_daily_action() {
     if( strlen($log) == 0 ) {
         $log .= "<p>No activity. Nothing changed.</p>";
     }
+    
+    add_filter( 'wp_mail_content_type', 'wpdocs_set_html_mail_content_type' );
+
     $body = $log_head . $log;
     $subject = "ABG Plugin Daily Log for " . date('m/d/Y', time());
     $email_from = "info@alabamabrewers.org";
 	$headers = sprintf('From: %s <%s> \r\n', $email_from, $email_from);
-    wp_mail($abgmp_notification_email_to, $subject, stripslashes($body), $headers );
+    wp_mail($abgmp_notification_email_to, $subject, $body, $headers );
+
+    remove_filter( 'wp_mail_content_type', 'wpdocs_set_html_mail_content_type' );
 }
 
 // New User Registration Hook
@@ -93,4 +98,8 @@ add_action('wp_login', 'abgp_login_action', 10, 2);
 function abgp_login_action( $user_login, $userobj ) {
 	$user = new WP_User( null, $user_login );
 	Sync_User_To_Role( $user->user_login, $user->user_email );
+}
+
+function wpdocs_set_html_mail_content_type() {
+    return 'text/html';
 }
