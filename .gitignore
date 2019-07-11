@@ -2,4 +2,4 @@
 config.php
 .vscode/
 *.json
-vendor/
+google-php-client/
