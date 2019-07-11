@@ -372,7 +372,66 @@ function BuildMembershipDirectory() {
 }
 
 function Sync_Members_to_Google_Groups() {
-    global $wpdb;
+    global $wpdb, $google_json_file_path, $googleAuthSubject, $googleAuthConfig, $googleAuthDomain;
+    require_once( plugin_dir_path( __FILE__ ) . 'google-php-client/vendor/autoload.php');
 
-    
+    $chamber_people = Get_ChamberDBPeople();
+
+    $bnd_members_group_emails = array();    // members@alabamabrewers.org
+    $distillers_group_emails = array();
+    $boardmembers_group_emails = array();
+    $cd1_group_emails = array();
+    $cd2_group_emails = array();
+    $cd3_group_emails = array();
+    $cd4_group_emails = array();
+    $cd5_group_emails = array();
+    $cd6_group_emails = array();
+    $cd7_group_emails = array();
+    $craftpac_group_emails = array();
+    $finance_cmte_emails = array();
+    $fundraising_cmte_emails = array();
+    $gac_cmte_emails = array();
+    $collab_cmte_emails = array();
+    $office_group_emails = array();
+    $owner_group_emails = array();
+    $production_group_emails = array();
+    $marketing_group_emails = array();
+    $tastingroom_group_emails = array();
+
+    foreach( $chamber_people as $person ) {
+        $tags = Get_Tags_For_MailChimp( $person );
+
+        if( in_array('Current', $tags) && ( in_array('Regular Member', $tags) || in_array('Associate Member', $tags) ) ) {
+            // They go in members@alabamabrewers.org
+            array_push($bnd_members_group_emails, trim( strtolower($person->email)) );
+        }
+    }
+
+    $client = new Google_Client();
+    $client->setScopes(array(
+        Google_Service_Directory::ADMIN_DIRECTORY_GROUP,
+        Google_Service_Directory::ADMIN_DIRECTORY_GROUP_MEMBER
+    ));
+    $client->setSubject($googleAuthSubject);
+    $client->setAuthConfig( $googleAuthConfig );
+    $service = new Google_Service_Directory($client);
+
+    $bnd_members_group = $service->members->listMembers('members@alabamabrewers.org', 
+        array('maxResults' => 400, ));
+    foreach( $bnd_members_group->members as $google_member ) {
+        $google_member_email = strtolower($google_member->email);
+        if( !in_array( $google_member_email, $bnd_members_group_emails ) ) {
+            // It is in Google but not in chamber. Take it out of Google
+            $service->members->delete('members@alabamabrewers.org', $google_member_email, array());
+        }
+    }
+    $google_emails = array_column( $bnd_members_group->members, 'email');
+    $google_emails = array_map( 'strtolower', $google_emails );
+    foreach( $bnd_members_group_emails as $chamber_member_email ) {
+        if( !in_array( $chamber_member_email, $google_emails ) ) {
+            // It is in chamber but not in Google. Add it to Google
+            $service->members->insert( 'members@alabamabrewers.org', 
+                new Google_Service_Directory_Member(array('email' => $chamber_member_email)) );
+        }
+    }
 }

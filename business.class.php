@@ -13,7 +13,8 @@ class Business {
 
 		$this->name = $this->post_business->post_title;
 		
-		$this->membership_status = get_the_terms( $this->post_business->ID, 'membership_status' )[0]->name;
+		$terms = get_the_terms( $this->post_business->ID, 'membership_status' );
+		$this->membership_status = $terms !== false ? $terms[0]->name : 'Non-Member';
 	}
 
 	function Get_Membership_Levels() {
