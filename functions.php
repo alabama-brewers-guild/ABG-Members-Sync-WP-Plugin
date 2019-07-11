@@ -305,8 +305,10 @@ function GetChamberDBPersonByEmail( $user_email ) {
 }
 
 function cmp_directory($a, $b) {
-    $last_word_a = array_pop( explode(' ', $a->name) );
-    $last_word_b = array_pop( explode(' ', $b->name) );
+    $a_name_parts = explode( ' ', $a->name );
+    $b_name_parts = explode( ' ', $b->name );
+    $last_word_a = array_pop( $a_name_parts );
+    $last_word_b = array_pop( $b_name_parts );
     return strcasecmp($last_word_a, $last_word_b);
 }
 
@@ -361,7 +363,6 @@ function BuildMembershipDirectory() {
         array( 'ID' => $directory_tablepress_table_id ),
         array( '%s' ),
         array( '%d' ));
-    echo $affected;
     if($affected == 0) {
         return "WARNING: Directory table not updated.";
     }
