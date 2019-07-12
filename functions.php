@@ -71,7 +71,7 @@ function Get_Tags_For_MailChimp( $person ) {
 function Sync_Members_to_MailChimp() {
     global $abgmp_mailchimp_list_id;
     global $abgmp_mailchimp_api_key;
-    $log_message = '';
+    $log_message = '<br />Sync_Members_to_MailChimp()<br />';
     $mailchimp_api = new MailChimpApiClient($abgmp_mailchimp_api_key);
 
     $offset=0;
@@ -197,7 +197,7 @@ function Sync_Members_to_MailChimp() {
 }
 
 function Sync_All_Users_To_Roles_And_People() {
-    $log_message = '';
+    $log_message = '<br />Sync_All_Users_To_Roles_And_People()<br />';
     foreach(get_users() as $user) {
         $log_message .= Sync_User_To_Role( $user->user_login, $user->user_email );
         $log_message .= Connect_User_To_Person( $user->user_login, $user->user_email );
@@ -206,7 +206,6 @@ function Sync_All_Users_To_Roles_And_People() {
 }
 
 function Sync_User_To_Role( $user_login, $user_email ) {
-    $log_message = '';
     $user = new WP_User( null, $user_login );
     $chamber_person = GetChamberDBPersonByEmail( $user_email );
 
@@ -273,8 +272,6 @@ function Sync_User_To_Role( $user_login, $user_email ) {
             $user->remove_role($role);
         }
     }
-
-    return $log_message;
 }
 
 function Connect_User_To_Person( $user_login, $user_email ) {
@@ -313,6 +310,7 @@ function cmp_directory($a, $b) {
 }
 
 function BuildMembershipDirectory() {
+	$log_message = "<br />BuildMembershipDirectory()<br />";
     global $wpdb;
     global $directory_tablepress_table_id;
     $people = Get_ChamberDBPeople();
@@ -363,23 +361,30 @@ function BuildMembershipDirectory() {
         array( 'ID' => $directory_tablepress_table_id ),
         array( '%s' ),
         array( '%d' ));
-    if($affected == 0) {
-        return "WARNING: Directory table not updated.";
-    }
-    else {
-        return '';
-    }
+
+    return $log_message;
 }
 
 function Sync_Members_to_Google_Groups() {
     global $wpdb, $google_json_file_path, $googleAuthSubject, $googleAuthConfig, $googleAuthDomain;
     require_once( plugin_dir_path( __FILE__ ) . 'google-php-client/vendor/autoload.php');
+    $log_message = '<br/>Sync_Members_to_Google_Groups()<br />';
 
     $chamber_people = Get_ChamberDBPeople();
 
-    $bnd_members_group_emails = array();    // members@alabamabrewers.org
-    $distillers_group_emails = array();
+    $bnd_members_group_emails = array('ck@alabamabrewers.org', 'droberts@alabamabrewers.org');    // members@alabamabrewers.org
+    $owner_group_emails = array('droberts@alabamabrewers.org');									  // owners@alabamabrewers.org
+    $distillers_group_emails = array('ck@alabamabrewers.org', 'droberts@alabamabrewers.org');	  // distillers@alabamabrewers.org
+    $production_group_emails = array();
+    $marketing_group_emails = array();
+    $tastingroom_group_emails = array();
     $boardmembers_group_emails = array();
+    $craftpac_group_emails = array();
+    $finance_cmte_emails = array();
+    $fundraising_cmte_emails = array();
+    $gac_cmte_emails = array();
+    $collab_cmte_emails = array();
+    $office_group_emails = array();
     $cd1_group_emails = array();
     $cd2_group_emails = array();
     $cd3_group_emails = array();
@@ -387,25 +392,38 @@ function Sync_Members_to_Google_Groups() {
     $cd5_group_emails = array();
     $cd6_group_emails = array();
     $cd7_group_emails = array();
-    $craftpac_group_emails = array();
-    $finance_cmte_emails = array();
-    $fundraising_cmte_emails = array();
-    $gac_cmte_emails = array();
-    $collab_cmte_emails = array();
-    $office_group_emails = array();
-    $owner_group_emails = array();
-    $production_group_emails = array();
-    $marketing_group_emails = array();
-    $tastingroom_group_emails = array();
 
     foreach( $chamber_people as $person ) {
         $tags = Get_Tags_For_MailChimp( $person );
+        $person_email = trim( strtolower($person->email) );
 
-        if( in_array('Current', $tags) && ( in_array('Regular Member', $tags) || in_array('Associate Member', $tags) ) ) {
+        if( in_array('Current', $tags) && ( in_array('Regular Member', $tags) || in_array('Associate Member', $tags) || in_array('Distillery Member', $tags) ) ) {
             // They go in members@alabamabrewers.org
-            array_push($bnd_members_group_emails, trim( strtolower($person->email)) );
+            array_push($bnd_members_group_emails, $person_email);
+        }
+        // From here forward, we can use the $bnd_members_group_emails list as a starter to focus only on members.
+        if( in_array($person->email, $bnd_members_group_emails) && in_array('Distillery Member', $tags) ) {
+        	// They go in distillers@alabamabrewers.org
+        	array_push($distillers_group_emails, $person_email );
+        }
+        if( in_array($person->email, $bnd_members_group_emails) && in_array('Owner/Executive', $tags) ) {
+        	// They go in owners@alabamabrewers.org
+        	array_push($owner_group_emails, $person_email);
+        }
+        if( in_array($person->email, $bnd_members_group_emails) && in_array('Production', $tags) ) {
+        	// They go in production@alabamabrewers.org
+        	array_push($production_group_emails, $person_email);
+        }
+        if( in_array($person->email, $bnd_members_group_emails) && in_array('Sales/Marketing', $tags) ) {
+        	// They go in sales-marking@alabamabrewers.org
+        	array_push($marketing_group_emails, $person_email);
+        }
+        if( in_array($person->email, $bnd_members_group_emails) && in_array('Tasting Room', $tags) ) {
+        	// They go in tastingroom@alabamabrewers.org
+        	array_push($tastingroom_group_emails, $person_email);
         }
     }
+    $bnd_count = count($bnd_members_group_emails);
 
     $client = new Google_Client();
     $client->setScopes(array(
@@ -416,22 +434,55 @@ function Sync_Members_to_Google_Groups() {
     $client->setAuthConfig( $googleAuthConfig );
     $service = new Google_Service_Directory($client);
 
-    $bnd_members_group = $service->members->listMembers('members@alabamabrewers.org', 
-        array('maxResults' => 400, ));
-    foreach( $bnd_members_group->members as $google_member ) {
-        $google_member_email = strtolower($google_member->email);
-        if( !in_array( $google_member_email, $bnd_members_group_emails ) ) {
-            // It is in Google but not in chamber. Take it out of Google
-            $service->members->delete('members@alabamabrewers.org', $google_member_email, array());
-        }
-    }
-    $google_emails = array_column( $bnd_members_group->members, 'email');
-    $google_emails = array_map( 'strtolower', $google_emails );
-    foreach( $bnd_members_group_emails as $chamber_member_email ) {
-        if( !in_array( $chamber_member_email, $google_emails ) ) {
-            // It is in chamber but not in Google. Add it to Google
-            $service->members->insert( 'members@alabamabrewers.org', 
-                new Google_Service_Directory_Member(array('email' => $chamber_member_email)) );
-        }
-    }
+    $log_message .= SyncMembersToGoogleGroup( $service, $bnd_members_group_emails, 'members@alabamabrewers.org' );
+    $log_message .= SyncMembersToGoogleGroup( $service, $distillers_group_emails, 'distillers@alabamabrewers.org');
+    $log_message .= SyncMembersToGoogleGroup( $service, $owner_group_emails, 'owners@alabamabrewers.org' );
+
+    return $log_message;
+}
+
+function SyncMembersToGoogleGroup( $service, $canoncial_email_list, $google_group_key ) {
+	$log_message = "<br/>SyncMembersToGoogleGroup() for {$google_group_key}<br />";
+	$google_group = $service->members->listMembers($google_group_key, array('maxResults' => 400));
+	$google_emails = array_column( $google_group->members, 'email' );
+	$google_emails = array_map( 'strtolower', $google_emails );
+	$canoncial_email_list = array_map( 'strtolower', $canoncial_email_list );
+
+	// If the Google email is NOT in chamber, take it out of Google
+	foreach( $google_emails as $google_member_email ) {
+		if( !filter_var($google_member_email, FILTER_VALIDATE_EMAIL ) ) {
+			// No email given or malformed. Reject.
+			continue;
+		}
+		if( !in_array( $google_member_email, $canoncial_email_list ) ) {
+			try{
+				$log_message .= "Removing {$google_member_email} from ${google_group_key}<br/ >";
+				$service->members->delete( $google_group_key, $google_member_email, array() );
+			}
+			catch(Exception $e) {
+				$log_message .= "Problem Removing {$google_member_email}: {$e->getMessage()}<br />";
+			}
+			
+		}
+	}
+	// If the Chamber email is NOT in Google, add it to Google
+	foreach( $canoncial_email_list as $chamber_member_email ) {
+		if( !filter_var($chamber_member_email, FILTER_VALIDATE_EMAIL ) ) {
+			// No email given or malformed. Reject.
+			continue;
+		}
+		if( !in_array( $chamber_member_email, $google_emails ) ) {
+			try{
+				$log_message .= "Adding '{$chamber_member_email}'' to ${google_group_key}<br/ >";
+				$service->members->insert( $google_group_key,
+					new Google_Service_Directory_Member(array(
+						'email' => $chamber_member_email
+					)));
+			}
+			catch(Exception $e) {
+				$log_message .= "Problem Adding '{$chamber_member_email}' to {$google_group_key}: {$e->getMessage()}<br />";
+			}
+		}
+	}
+	return $log_message;
 }
