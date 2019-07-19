@@ -376,15 +376,15 @@ function Sync_Members_to_Google_Groups() {
     $bnd_members_group_emails = array('ck@alabamabrewers.org', 'droberts@alabamabrewers.org');    // members@alabamabrewers.org
     $owner_group_emails = array('droberts@alabamabrewers.org');									  // owners@alabamabrewers.org
     $distillers_group_emails = array('ck@alabamabrewers.org', 'droberts@alabamabrewers.org');	  // distillers@alabamabrewers.org
-    $production_group_emails = array();
-    $marketing_group_emails = array();
-    $tastingroom_group_emails = array();
-    $boardmembers_group_emails = array();
-    $craftpac_group_emails = array();
-    $finance_cmte_emails = array();
-    $fundraising_cmte_emails = array();
-    $gac_cmte_emails = array();
-    $collab_cmte_emails = array();
+    $production_group_emails = array('droberts@alabamabrewers.org');                              // production@alabamabrewers.org
+    $marketing_group_emails = array('droberts@alabamabrewers.org');                               // sales-marketing@alabamabrewers.org
+    $tastingroom_group_emails = array('droberts@alabamabrewers.org');                             // tasting-room@alabamabrewers.org
+    $boardmembers_group_emails = array('droberts@alabamabrewers.org');                            // abgboard@alabamabrewers.org
+    $craftpac_group_emails = array();                                                             // craftpac@alabamabrewers.org
+    $finance_cmte_emails = array('droberts@alabamabrewers.org');                                  // finance@alabamabrewers.org
+    $fundraising_cmte_emails = array('droberts@alabamabrewers.org');                              // fundraising@alabamabrewers.org
+    $gac_cmte_emails = array('droberts@alabamabrewers.org');                                      // gac@alabamabrewers.org
+    $collab_cmte_emails = array('droberts@alabamabrewers.org', 'ck@alabamabrewers.org');          // collaboration@alabamabrewers.org
     $office_group_emails = array();
     $cd1_group_emails = array();
     $cd2_group_emails = array();
@@ -423,6 +423,30 @@ function Sync_Members_to_Google_Groups() {
         	// They go in tastingroom@alabamabrewers.org
         	array_push($tastingroom_group_emails, $person_email);
         }
+        if( in_array($person->email, $bnd_members_group_emails) && in_array('Board Members', $tags) ) {
+            // They go in abgboard@alabamabrewers.org
+            array_push($boardmembers_group_emails, $person_email);
+        }
+        if( in_array($person->email, $bnd_members_group_emails) && in_array('Craft PAC Members', $tags) ) {
+            // They go in craftpac@alabamabrewers.org
+            array_push($craftpac_group_emails, $person_email);
+        }
+        if( in_array($person->email, $bnd_members_group_emails) && in_array('Finance Committee', $tags) ) {
+            // They go in finance@alabamabrewers.org
+            array_push($finance_cmte_emails, $person_email);
+        }
+        if( in_array($person->email, $bnd_members_group_emails) && in_array('Fundraising Committee', $tags) ) {
+            // They go in fundraising@alabamabrewers.org
+            array_push($fundraising_cmte_emails, $person_email);
+        }
+        if( in_array($person->email, $bnd_members_group_emails) && in_array('Govt Affairs Committee', $tags) ) {
+            // They go in gac@alabamabrewers.org
+            array_push($gac_cmte_emails, $person_email);
+        }
+        if( in_array($person->email, $bnd_members_group_emails) && in_array('Guild Collaboration Committee', $tags) ) {
+            // They go in collaboration@alabamabrewers.org
+            array_push($collab_cmte_emails, $person_email);
+        }
     }
     $bnd_count = count($bnd_members_group_emails);
 
@@ -438,6 +462,15 @@ function Sync_Members_to_Google_Groups() {
     $log_message .= SyncMembersToGoogleGroup( $service, $bnd_members_group_emails, 'members@alabamabrewers.org' );
     $log_message .= SyncMembersToGoogleGroup( $service, $distillers_group_emails, 'distillers@alabamabrewers.org');
     $log_message .= SyncMembersToGoogleGroup( $service, $owner_group_emails, 'owners@alabamabrewers.org' );
+    $log_message .= SyncMembersToGoogleGroup( $service, $production_group_emails, 'production@alabamabrewers.org' );
+    $log_message .= SyncMembersToGoogleGroup( $service, $marketing_group_emails, 'sales-marketing@alabamabrewers.org' );
+    $log_message .= SyncMembersToGoogleGroup( $service, $tastingroom_group_emails, 'tasting-room@alabamabrewers.org' );
+    $log_message .= SyncMembersToGoogleGroup( $service, $boardmembers_group_emails, 'abgboard@alabamabrewers.org' );
+    $log_message .= SyncMembersToGoogleGroup( $service, $craftpac_group_emails, 'craftpac@alabamabrewers.org' );
+    $log_message .= SyncMembersToGoogleGroup( $service, $finance_cmte_emails, 'finance@alabamabrewers.org' );
+    $log_message .= SyncMembersToGoogleGroup( $service, $fundraising_cmte_emails, 'fundraising@alabamabrewers.org' );
+    $log_message .= SyncMembersToGoogleGroup( $service, $gac_cmte_emails, 'gac@alabamabrewers.org' );
+    $log_message .= SyncMembersToGoogleGroup( $service, $collab_cmte_emails, 'collaboration@alabamabrewers.org' );
 
     return $log_message;
 }
