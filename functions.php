@@ -372,6 +372,7 @@ function BuildMembershipDirectory() {
 }
 
 function Sync_Members_to_Google_Groups() {
+    $log_message = '';
     global $wpdb, $google_json_file_path, $googleAuthSubject, $googleAuthConfig, $googleAuthDomain;
     require_once( plugin_dir_path( __FILE__ ) . 'google-php-client/vendor/autoload.php');
 
@@ -422,6 +423,7 @@ function Sync_Members_to_Google_Groups() {
         $google_member_email = strtolower($google_member->email);
         if( !in_array( $google_member_email, $bnd_members_group_emails ) ) {
             // It is in Google but not in chamber. Take it out of Google
+            $log_message .= "Removing {$google_member_email} from members@alabamabrewers.org";
             $service->members->delete('members@alabamabrewers.org', $google_member_email, array());
         }
     }
@@ -430,6 +432,7 @@ function Sync_Members_to_Google_Groups() {
     foreach( $bnd_members_group_emails as $chamber_member_email ) {
         if( !in_array( $chamber_member_email, $google_emails ) ) {
             // It is in chamber but not in Google. Add it to Google
+            $log_message .= "Adding {$chamber_member_email} to members@alabamabrewers.org";
             $service->members->insert( 'members@alabamabrewers.org', 
                 new Google_Service_Directory_Member(array('email' => $chamber_member_email)) );
         }
