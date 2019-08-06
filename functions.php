@@ -477,7 +477,7 @@ function Sync_Members_to_Google_Groups() {
 
 function SyncMembersToGoogleGroup( $service, $canoncial_email_list, $google_group_key ) {
 	$log_message = "<br/>SyncMembersToGoogleGroup() for {$google_group_key}<br />";
-	$google_group = $service->members->listMembers($google_group_key, array('maxResults' => 400));
+	$google_group = $service->members->listMembers($google_group_key, array('maxResults' => 200));
 	$google_emails = array_column( $google_group->members, 'email' );
 	$google_emails = array_map( 'strtolower', $google_emails );
 	$canoncial_email_list = array_map( 'strtolower', $canoncial_email_list );
@@ -490,7 +490,7 @@ function SyncMembersToGoogleGroup( $service, $canoncial_email_list, $google_grou
 		}
 		if( !in_array( $google_member_email, $canoncial_email_list ) ) {
 			try{
-				$log_message .= "Removing {$google_member_email} from ${google_group_key}<br/ >";
+				$log_message .= "Removing {$google_member_email}<br/ >";
 				$service->members->delete( $google_group_key, $google_member_email, array() );
 			}
 			catch(Exception $e) {
@@ -507,14 +507,14 @@ function SyncMembersToGoogleGroup( $service, $canoncial_email_list, $google_grou
 		}
 		if( !in_array( $chamber_member_email, $google_emails ) ) {
 			try{
-				$log_message .= "Adding '{$chamber_member_email}'' to ${google_group_key}<br/ >";
+				$log_message .= "Adding {$chamber_member_email}<br/ >";
 				$service->members->insert( $google_group_key,
 					new Google_Service_Directory_Member(array(
 						'email' => $chamber_member_email
 					)));
 			}
 			catch(Exception $e) {
-				$log_message .= "Problem Adding '{$chamber_member_email}' to {$google_group_key}: {$e->getMessage()}<br />";
+				$log_message .= "Problem Adding {$chamber_member_email}: {$e->getMessage()}<br />";
 			}
 		}
 	}
