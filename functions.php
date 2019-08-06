@@ -386,13 +386,13 @@ function Sync_Members_to_Google_Groups() {
     $gac_cmte_emails = array('droberts@alabamabrewers.org');                                      // gac@alabamabrewers.org
     $collab_cmte_emails = array('droberts@alabamabrewers.org', 'ck@alabamabrewers.org');          // collaboration@alabamabrewers.org
     $office_group_emails = array();
-    $cd1_group_emails = array();
-    $cd2_group_emails = array();
-    $cd3_group_emails = array();
-    $cd4_group_emails = array();
-    $cd5_group_emails = array();
-    $cd6_group_emails = array();
-    $cd7_group_emails = array();
+    $cd1_group_emails = array('droberts@alabamabrewers.org');
+    $cd2_group_emails = array('droberts@alabamabrewers.org');
+    $cd3_group_emails = array('droberts@alabamabrewers.org');
+    $cd4_group_emails = array('droberts@alabamabrewers.org');
+    $cd5_group_emails = array('droberts@alabamabrewers.org');
+    $cd6_group_emails = array('droberts@alabamabrewers.org');
+    $cd7_group_emails = array('droberts@alabamabrewers.org');
 
     foreach( $chamber_people as $person ) {
         $tags = Get_Tags_For_MailChimp( $person );
